@@ -6,6 +6,7 @@ const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const cron = require('node-cron');
+const Student = require('./Model/Student');
 
 dotenv.config();
 
@@ -22,9 +23,37 @@ app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000', cre
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const logStudentTable = async () => {
+  try {
+    const students = await Student.find().sort({ createdAt: -1 }).lean();
+    const rows = students.map(student => ({
+      Name: student.name,
+      USN: student.usn,
+      Registered: student.createdAt ? new Date(student.createdAt).toLocaleString() : '-',
+      'Logged In': student.isLoggedIn ? 'Yes' : 'No',
+      'Last Login': student.lastLoginAt ? new Date(student.lastLoginAt).toLocaleString() : '-',
+      'Last Logout': student.lastLogoutAt ? new Date(student.lastLogoutAt).toLocaleString() : '-'
+    }));
+
+    if (process.stdout.isTTY) {
+      console.clear();
+    }
+    console.log('Registered students and login activity (refreshes on login, logout, or registration):');
+    console.table(rows);
+  } catch (error) {
+    console.error('Could not print student activity table:', error);
+  }
+};
+app.set('logStudentTable', logStudentTable);
+
 // Mongo connection
 const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/myapp24';
-mongoose.connect(mongoUri).then(() => console.log('MongoDB connected')).catch(err => console.error('Mongo error', err));
+mongoose.connect(mongoUri)
+  .then(async () => {
+    console.log('MongoDB connected');
+    await logStudentTable();
+  })
+  .catch(err => console.error('Mongo error', err));
 
 // Socket.io basic wiring
 io.on('connection', (socket) => {

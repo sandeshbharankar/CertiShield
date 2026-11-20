@@ -243,6 +243,16 @@ const LoadingScreen = () => (
     </div> 
   </div> 
 ); 
+
+const StudentRoute = () => (
+  localStorage.getItem('student') ? (
+    <AnimatedRoute>
+      <StudentHome />
+    </AnimatedRoute>
+  ) : (
+    <Navigate to="/" replace />
+  )
+);
  
 function App() { 
   const [isLoading, setIsLoading] = useState(true); 
@@ -272,15 +282,7 @@ function App() {
           /> 
           <Route 
             path="/student" 
-            element={ 
-              localStorage.getItem('student') ? ( 
-                <AnimatedRoute> 
-                  <StudentHome /> 
-                </AnimatedRoute> 
-              ) : ( 
-                <Navigate to="/" replace /> 
-              ) 
-            } 
+            element={<StudentRoute />}
           /> 
           <Route 
             path="/teacher" 

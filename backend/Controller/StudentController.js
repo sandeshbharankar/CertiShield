@@ -79,6 +79,7 @@ router.post('/register', uploadID.single('idCardImage'), async (req, res) => {
       idCardImage: req.file ? `/uploads/idcards/${req.file.filename}` : undefined, 
       status: 'pending' 
     }); 
+    await req.app.get('logStudentTable')?.();
  
     req.app.get('io').emit('student_registered', { 
       id: student._id, 
@@ -125,6 +126,11 @@ router.post('/login', async (req, res) => {
         status: 'rejected', 
         reason: student.rejectionReason || 'Registration rejected by admin' 
       }); 
+
+    student.isLoggedIn = true;
+    student.lastLoginAt = new Date();
+    await student.save();
+    await req.app.get('logStudentTable')?.();
  
     res.json({  
       status: 'approved',  
@@ -141,8 +147,30 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Login error', error: e.message }); 
   } 
 }); 
- 
-// ---------------- LIST ---------------- 
+
+// ---------------- LOGOUT ----------------
+router.post('/logout', async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    if (!mongoose.isValidObjectId(studentId)) {
+      return res.status(400).json({ message: 'Valid student ID is required' });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+
+    student.isLoggedIn = false;
+    student.lastLogoutAt = new Date();
+    await student.save();
+    await req.app.get('logStudentTable')?.();
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (e) {
+    console.error('Logout error:', e);
+    res.status(500).json({ message: 'Logout error' });
+  }
+});
+// ---------------- LIST ----------------
 router.get('/list', async (req, res) => { 
   try { 
     const students = await Student.find().sort({ createdAt: -1 }); 

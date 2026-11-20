@@ -436,9 +436,15 @@ export default function StudentHome() {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem('student');
-    navigate('/student');
+    navigate('/', { replace: true });
+
+    try {
+      await axios.post(`${API}/student/logout`, { studentId: student._id });
+    } catch (error) {
+      console.error('Could not record student logout:', error);
+    }
   };
 
   const FloatingElements = () => (
