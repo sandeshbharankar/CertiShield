@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -324,15 +324,7 @@ export default function StudentHome() {
   const [selectedFile, setSelectedFile] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const s = localStorage.getItem('student');
-    if (s) setStudent(JSON.parse(s));
-    fetchAll();
-    const i = setInterval(fetchAll, 10000);
-    return () => clearInterval(i);
-  }, []);
-
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     try {
       const [{ data: stus }, { data: an }] = await Promise.all([
         axios.get(`${API}/student/list`),
@@ -344,7 +336,15 @@ export default function StudentHome() {
     } catch (_) {
       setLoading(false);
     }
-  };
+  }, [API]);
+
+  useEffect(() => {
+    const s = localStorage.getItem('student');
+    if (s) setStudent(JSON.parse(s));
+    fetchAll();
+    const i = setInterval(fetchAll, 10000);
+    return () => clearInterval(i);
+  }, [fetchAll]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -356,7 +356,6 @@ export default function StudentHome() {
       return;
     }
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/x-pdf'];
     const mime = file.type || '';
     const fileName = file.name || '';
     const ext = fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2);
@@ -463,20 +462,6 @@ export default function StudentHome() {
       <div style={styles.loadingSpinner}></div>
     </div>
   );
-
-  const getStatusBadge = (status) => {
-    const config = {
-      valid: { text: '✅ Verified', color: 'bg-green-100 text-green-800 border-green-300' },
-      fake: { text: '❌ Not Verified', color: 'bg-red-100 text-red-800 border-red-300' },
-      pending: { text: '⏳ Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-    };
-    
-    const { text, color } = config[status] || config.pending;
-    return { text, color };
-  };
-
-  const currentStudent = students.find(s => s._id === student._id);
-  
 
   return (
     <div style={styles.container}>
@@ -586,7 +571,6 @@ export default function StudentHome() {
           <div style={styles.grid}>
             {students.map((s, index) => {
               const isCurrentUser = student._id === s._id;
-              const badge = getStatusBadge(s.certificateStatus);
               
               return (
                 <div 
