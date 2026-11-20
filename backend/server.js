@@ -13,14 +13,15 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 let studentTablePrinted = false;
+const clientOrigin = (process.env.CLIENT_ORIGIN || 'http://localhost:3000').replace(/\/+$/, '');
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
+    origin: clientOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: clientOrigin, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
