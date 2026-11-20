@@ -312,7 +312,7 @@ globalStyles.innerHTML = `
 document.head.appendChild(globalStyles);
 
 export default function StudentHome() {
-  const API = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+  const API = (process.env.REACT_APP_API_BASE || 'http://localhost:5000').replace(/\/+$/, '');
   const [student, setStudent] = useState(null);
   const [students, setStudents] = useState([]);
   const [anns, setAnns] = useState([]);

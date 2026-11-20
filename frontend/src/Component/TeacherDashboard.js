@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const API = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+const API = (process.env.REACT_APP_API_BASE || 'http://localhost:5000').replace(/\/+$/, '');
 const BASE_URL = API;
 
 const styles = {

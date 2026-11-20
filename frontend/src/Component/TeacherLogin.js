@@ -231,7 +231,7 @@ globalStyles.innerHTML = `
 document.head.appendChild(globalStyles);
 
 export default function TeacherLogin() {
-  const API = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+  const API = (process.env.REACT_APP_API_BASE || 'http://localhost:5000').replace(/\/+$/, '');
   const [loginID, setLoginID] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

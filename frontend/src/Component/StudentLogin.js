@@ -179,7 +179,7 @@ globalStyles.innerHTML = `
 document.head.appendChild(globalStyles);
 
 export default function StudentLogin() {
-  const API = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+  const API = (process.env.REACT_APP_API_BASE || 'http://localhost:5000').replace(/\/+$/, '');
   const [name, setName] = useState('');
   const [usn, setUsn] = useState('');
   const [message, setMessage] = useState('');
