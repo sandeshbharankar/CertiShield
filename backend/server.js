@@ -12,6 +12,7 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+let studentTablePrinted = false;
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
@@ -22,6 +23,47 @@ const io = new Server(server, {
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.get('/', (req, res) => {
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Status</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      display: grid;
+      min-height: 100vh;
+      margin: 0;
+      place-items: center;
+      background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+      color: #f1f5f9;
+      font-family: system-ui, sans-serif;
+    }
+    main {
+      width: min(90%, 520px);
+      padding: 40px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      background: rgba(15,23,42,.72);
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .status { color: #86efac; font-weight: 700; }
+    p { color: #cbd5e1; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Welcome to the Server</h1>
+    <p class="status">● Server is running</p>
+    <p>The backend is up and ready to receive requests.</p>
+  </main>
+</body>
+</html>`);
+});
 
 const logStudentTable = async () => {
   try {
@@ -37,9 +79,12 @@ const logStudentTable = async () => {
 
     if (process.stdout.isTTY) {
       console.clear();
+    } else if (studentTablePrinted) {
+      return;
     }
     console.log('Registered students and login activity (refreshes on login, logout, or registration):');
     console.table(rows);
+    studentTablePrinted = true;
   } catch (error) {
     console.error('Could not print student activity table:', error);
   }
@@ -77,4 +122,7 @@ cron.schedule('0 1 * * *', async () => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  const serverUrl = `http://localhost:${server.address().port}`;
+  console.log(`Server is connected and running at ${serverUrl}`);
+});
