@@ -399,6 +399,8 @@ export default function TeacherDashboard() {
   const [fake, setFake] = useState([]);
   const [anns, setAnns] = useState([]);
   const [message, setMessage] = useState('');
+  const [important, setImportant] = useState(false);
+  const [announcementError, setAnnouncementError] = useState('');
   const [reasons, setReasons] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -444,10 +446,43 @@ export default function TeacherDashboard() {
   };
   
   const postAnn = async () => { 
-    if (!message.trim()) return; 
-    await axios.post(`${API}/teacher/announcement`, { message }); 
-    setMessage(''); 
-    load(); 
+    if (!message.trim()) return;
+    setAnnouncementError('');
+    try {
+      await axios.post(`${API}/teacher/announcement`, { message, important });
+      setMessage('');
+      setImportant(false);
+      load();
+    } catch (error) {
+      console.error('Error posting announcement:', error);
+      setAnnouncementError('Could not post the announcement. Please try again.');
+    }
+  };
+
+  const toggleAnnouncementImportance = async (announcement) => {
+    setAnnouncementError('');
+    try {
+      const { data } = await axios.patch(
+        `${API}/teacher/announcement/${announcement._id}/important`,
+        { important: !announcement.important }
+      );
+      setAnns(current => current.map(item => item._id === data._id ? data : item));
+    } catch (error) {
+      console.error('Error updating announcement importance:', error);
+      setAnnouncementError('Could not update the announcement. Please try again.');
+    }
+  };
+
+  const deleteAnnouncement = async (announcement) => {
+    if (!window.confirm('Delete this announcement?')) return;
+    setAnnouncementError('');
+    try {
+      await axios.delete(`${API}/teacher/announcement/${announcement._id}`);
+      setAnns(current => current.filter(item => item._id !== announcement._id));
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      setAnnouncementError('Could not delete the announcement. Please try again.');
+    }
   };
 
   const FloatingElements = () => (
@@ -711,10 +746,24 @@ export default function TeacherDashboard() {
                     onChange={e => setMessage(e.target.value)}
                     rows="3"
                   />
+                  <label style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: '#cbd5e1'}}>
+                    <input
+                      type="checkbox"
+                      checked={important}
+                      onChange={e => setImportant(e.target.checked)}
+                    />
+                    Mark as important
+                  </label>
                   <button style={styles.postButton} onClick={postAnn}>
                     <span>📤</span> Post Announcement
                   </button>
                 </div>
+
+                {announcementError && (
+                  <div role="alert" style={{color: '#fca5a5', marginBottom: '16px'}}>
+                    {announcementError}
+                  </div>
+                )}
                 
                 {/* Announcements List */}
                 {anns.length === 0 ? (
@@ -725,7 +774,17 @@ export default function TeacherDashboard() {
                 ) : (
                   <div style={styles.grid}>
                     {anns.map((a, index) => (
-                      <div key={a._id} style={{...styles.studentCard, animationDelay: `${index * 0.05}s`}}>
+                      <div key={a._id} style={{
+                        ...styles.studentCard,
+                        animationDelay: `${index * 0.05}s`,
+                        border: a.important ? '1px solid rgba(245, 158, 11, 0.55)' : styles.studentCard.border,
+                        background: a.important ? 'rgba(120, 83, 15, 0.22)' : styles.studentCard.background
+                      }}>
+                        {a.important && (
+                          <div style={{fontSize: '12px', color: '#fcd34d', fontWeight: '700', marginBottom: '8px'}}>
+                            ⭐ Important announcement
+                          </div>
+                        )}
                         <div style={{fontSize: '16px', color: '#f1f5f9', marginBottom: '12px', lineHeight: '1.6'}}>
                           {a.message}
                         </div>
@@ -740,6 +799,22 @@ export default function TeacherDashboard() {
                             })}
                           </div>
                         )}
+                        <div style={{display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap'}}>
+                          <button
+                            type="button"
+                            onClick={() => toggleAnnouncementImportance(a)}
+                            style={{padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.4)', background: 'rgba(245, 158, 11, 0.12)', color: '#fcd34d', cursor: 'pointer'}}
+                          >
+                            {a.important ? 'Unmark important' : 'Mark important'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteAnnouncement(a)}
+                            style={{padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.12)', color: '#fca5a5', cursor: 'pointer'}}
+                          >
+                            Delete announcement
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

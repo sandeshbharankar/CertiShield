@@ -55,12 +55,41 @@ router.get('/fake-attempts', async (req, res) => {
  
 router.post('/announcement', async (req, res) => { 
   try { 
-    const { message } = req.body; 
-    const a = await Announcement.create({ message }); 
+    const { message, important } = req.body;
+    const a = await Announcement.create({ message, important: important === true });
     req.app.get('io').emit('announcement_new', a); 
     res.json(a); 
   } catch (e) { 
     res.status(500).json({ message: 'Error creating announcement' }); 
   } 
 }); 
+
+router.patch('/announcement/:id/important', async (req, res) => {
+  try {
+    if (typeof req.body.important !== 'boolean') {
+      return res.status(400).json({ message: 'Important status must be a boolean' });
+    }
+    const announcement = await Announcement.findByIdAndUpdate(
+      req.params.id,
+      { important: req.body.important },
+      { new: true, runValidators: true }
+    );
+    if (!announcement) return res.status(404).json({ message: 'Announcement not found' });
+    req.app.get('io').emit('announcement_updated', announcement);
+    res.json(announcement);
+  } catch (e) {
+    res.status(500).json({ message: 'Error updating announcement' });
+  }
+});
+
+router.delete('/announcement/:id', async (req, res) => {
+  try {
+    const announcement = await Announcement.findByIdAndDelete(req.params.id);
+    if (!announcement) return res.status(404).json({ message: 'Announcement not found' });
+    req.app.get('io').emit('announcement_deleted', { id: announcement._id });
+    res.json({ message: 'Announcement deleted' });
+  } catch (e) {
+    res.status(500).json({ message: 'Error deleting announcement' });
+  }
+});
 module.exports = router;

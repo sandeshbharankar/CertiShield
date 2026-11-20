@@ -541,7 +541,20 @@ export default function StudentHome() {
             </div>
           ) : (
             anns.map((a, index) => (
-              <div key={a._id} style={{...styles.announcementItem, animationDelay: `${index * 0.1}s`}}>
+              <div key={a._id} style={{
+                ...styles.announcementItem,
+                animationDelay: `${index * 0.1}s`,
+                ...(a.important ? {
+                  background: 'rgba(120, 83, 15, 0.24)',
+                  borderLeft: '4px solid #f59e0b',
+                  boxShadow: '0 0 0 1px rgba(245, 158, 11, 0.18)'
+                } : {})
+              }}>
+                {a.important && (
+                  <div style={{fontSize: '12px', color: '#fcd34d', fontWeight: '700', marginBottom: '8px'}}>
+                    ⭐ Important announcement
+                  </div>
+                )}
                 <div>{a.message}</div>
                 {a.createdAt && (
                   <div style={{fontSize: '12px', color: '#64748b', marginTop: '8px'}}>

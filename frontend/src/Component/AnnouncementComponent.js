@@ -334,6 +334,7 @@ export default function AnnouncementComponent({ announcements, onRefresh }) {
       <div style={styles.announcementList}>
         {displayedAnnouncements.map((announcement, index) => {
           const priority = getPriority(announcement.message);
+          const isImportant = announcement.important === true;
           const isExpanded = expandedAnnouncements[announcement._id];
           const showExpandButton = announcement.message.length > 150;
           const displayMessage = isExpanded || !showExpandButton 
@@ -346,12 +347,22 @@ export default function AnnouncementComponent({ announcements, onRefresh }) {
               style={{
                 ...styles.announcementItem,
                 animationDelay: `${index * 0.1}s`,
-                animation: 'slideInRight 0.5s ease-out forwards'
+                animation: 'slideInRight 0.5s ease-out forwards',
+                ...(isImportant ? {
+                  background: 'rgba(120, 83, 15, 0.28)',
+                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                  boxShadow: '0 0 0 1px rgba(245, 158, 11, 0.12)'
+                } : {})
               }}
             >
               <div style={styles.announcementIcon}>
-                {priority === 'high' ? '🚨' : priority === 'medium' ? '⚠️' : '📢'}
+                {isImportant ? '⭐' : priority === 'high' ? '🚨' : priority === 'medium' ? '⚠️' : '📢'}
               </div>
+              {isImportant && (
+                <div style={{fontSize: '12px', color: '#fcd34d', fontWeight: '700', marginBottom: '8px'}}>
+                  Important announcement
+                </div>
+              )}
               
               <div style={styles.announcementContent}>
                 {displayMessage}

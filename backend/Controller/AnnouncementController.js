@@ -14,8 +14,8 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { message } = req.body;
-    const a = await Announcement.create({ message });
+    const { message, important } = req.body;
+    const a = await Announcement.create({ message, important: important === true });
     res.json(a);
   } catch (e) {
     res.status(500).json({ message: 'Error creating announcement' });
